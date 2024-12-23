@@ -1,0 +1,99 @@
+import React, { useState } from 'react';
+
+const RecipeReview = ({ recipeId, onReviewSubmitted }) => {
+  const [review, setReview] = useState({
+    rating: 5,
+    comment: '',
+    images: []
+  });
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setReview({ ...review, images: files });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('rating', review.rating);
+    formData.append('comment', review.comment);
+    review.images.forEach((image, index) => {
+      formData.append(`images`, image);
+    });
+
+    try {
+      const response = await fetch(`/api/recipes/${recipeId}/reviews`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        setReview({ rating: 5, comment: '', images: [] });
+        if (onReviewSubmitted) {
+          onReviewSubmitted();
+        }
+        alert('Review submitted successfully!');
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow mt-4">
+      <h3 className="text-xl font-semibold mb-4">Write a Review</h3>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">Rating</label>
+          <div className="flex space-x-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                className={`text-2xl ${
+                  review.rating >= star ? 'text-yellow-400' : 'text-gray-300'
+                }`}
+                onClick={() => setReview({ ...review, rating: star })}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Your Review</label>
+          <textarea
+            className="w-full p-2 border rounded"
+            value={review.comment}
+            onChange={(e) => setReview({ ...review, comment: e.target.value })}
+            required
+            rows={4}
+            placeholder="Share your thoughts about this recipe..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Add Photos</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="w-full p-2 border rounded"
+            onChange={handleImageChange}
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+        >
+          Submit Review
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default RecipeReview;
